@@ -6,101 +6,66 @@ const OpenAI = require("openai");
 
 const app = express();
 
-// 🔹 Configuración básica
+// 🔹 Middlewares
 app.use(cors());
 app.use(express.json());
 
-// 🔹 Validación de clave
+// 🔑 Cliente OpenAI
 if (!process.env.OPENAI_API_KEY) {
-  console.error("❌ Falta OPENAI_API_KEY en backend/.env");
-  process.exit(1);
+  console.error("❌ OPENAI_API_KEY no configurada");
 }
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// 🔹 Endpoint salud (Railway lo usa para verificar)
+// 🟢 Endpoint raíz (NECESARIO para healthcheck Railway)
 app.get("/", (req, res) => {
-  res.status(200).json({
-    status: "ok",
-    service: "kairoma-backend",
-  });
+  res.status(200).send("Kairoma backend OK");
 });
 
-// 🔹 Endpoint principal
+// 💡 Endpoint IA
 app.post("/idea", async (req, res) => {
-  const t = (req.body?.topic || "")
-    .toString()
-    .trim()
-    .slice(0, 200);
+  const topic = (req.body?.topic || "").trim();
 
-  if (!t) {
+  if (!topic) {
     return res.json({
       idea: "Escribe un tema para generar ideas.",
     });
   }
 
   try {
-    const r = await client.responses.create({
+    const response = await client.responses.create({
       model: "gpt-4.1-mini",
       input: [
         {
           role: "system",
           content:
-            "Eres un generador de ideas práctico. Respondes en español con ideas claras y accionables.",
+            "Genera ideas prácticas, claras y accionables en español.",
         },
         {
           role: "user",
-          content:
-            `Tema: "${t}".\n` +
-            `Dame EXACTAMENTE 3 ideas.\n` +
-            `Formato:\n` +
-            `1) Título — explicación breve. Primer paso: ...\n` +
-            `2) ...\n` +
-            `3) ...`,
+          content: `Tema: ${topic}. Dame 3 ideas breves con primer paso.`,
         },
       ],
-      max_output_tokens: 280,
+      max_output_tokens: 200,
     });
 
-    const idea = (r.output_text || "").trim();
+    const idea = response.output_text || "No se pudo generar respuesta.";
 
-    if (!idea) {
-      return res.json({
-        idea: "No se pudo generar respuesta. Intenta otra vez.",
-      });
-    }
-
-    return res.json({ idea });
-  } catch (err) {
-    const status = err?.status || err?.response?.status;
-    const code =
-      err?.error?.code ||
-      err?.response?.data?.error?.code;
-    const message =
-      err?.error?.message ||
-      err?.response?.data?.error?.message ||
-      err?.message ||
-      String(err);
-
-    console.error("🔥 OPENAI ERROR REAL =>", {
-      status,
-      code,
-      message,
-    });
-
-    return res.status(500).json({
-      idea:
-        `Error IA (${status || "?"}${code ? ` / ${code}` : ""}). ` +
-        `Mira la terminal: ahí está el motivo exacto.`,
+    res.json({ idea });
+  } catch (error) {
+    console.error("🔥 ERROR IA:", error);
+    res.status(500).json({
+      idea: "Error generando idea con IA",
     });
   }
 });
 
-// 🔹 Puerto compatible con Railway
+// 🔥 PUERTO PRODUCCIÓN (RAILWAY)
 const PORT = process.env.PORT || 3000;
 
+// 🔥 BIND necesario para contenedores
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Kairoma backend corriendo en puerto ${PORT}`);
 });
