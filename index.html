@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KAIROMA</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="hero">
+
+  <div class="bg-orb orb-a"></div>
+  <div class="bg-orb orb-b"></div>
+  <div class="bg-grid"></div>
+
+  <div class="card">
+
+    <!-- LOGO -->
+    <div class="logoImgWrap">
+      <img src="assets/KAIROMA.png" alt="KAIROMA" class="logoImg">
+    </div>
+
+    <!-- TITULO -->
+    <h1>Desbloquea ideas que te mueven</h1>
+    <p class="subtitle">Inspírate, actúa y crea en segundos</p>
+
+    <!-- BOTON INICIAL -->
+    <button id="startBtn" class="primary">✨ Probar gratis</button>
+    <p class="micro" id="microText">Pruébalo una vez y entenderás</p>
+
+    <!-- CAJA DE ACCIÓN -->
+    <div id="actionBox" class="hidden">
+
+      <div class="inputWrap">
+        <input
+          type="text"
+          id="userInput"
+          placeholder="Escribe un tema… (ej: ingresos extra, viajes, gimnasio, negocio)"
+          autocomplete="off"
+        >
+        <button id="generateBtn" class="primary">Generar ⚡</button>
+      </div>
+
+      <div class="hint">Tip: pulsa <span>Enter</span> para generar</div>
+
+      <!-- RESULTADO IA -->
+      <div id="result" class="resultArea"></div>
+
+      <!-- ACCIONES -->
+      <div id="actions" class="actions hidden">
+        <button id="againBtn" class="secondary">Otra idea ✨</button>
+        <button id="copyBtn" class="secondary">Copiar 📋</button>
+      </div>
+
+      <div id="toast" class="toast">Copiado</div>
+    </div>
+
+    <!-- TAGS -->
+    <div class="footer">
+      <span class="pill">Rápido</span>
+      <span class="pill">Accionable</span>
+      <span class="pill">Compartible</span>
+    </div>
+
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
