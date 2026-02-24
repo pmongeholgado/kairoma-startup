@@ -6,32 +6,34 @@ const OpenAI = require("openai");
 
 const app = express();
 
-// 🔹 Middlewares
+// 🔑 IMPORTANTE: Railway necesita escuchar en 0.0.0.0
+const HOST = "0.0.0.0";
+const PORT = process.env.PORT || 3000;
+
 app.use(cors());
 app.use(express.json());
 
-// 🔑 Cliente OpenAI
+// 🟢 Healthcheck endpoint (Railway lo necesita)
+app.get("/", (req, res) => {
+  res.status(200).send("OK");
+});
+
+// 🟢 Verificación API key
 if (!process.env.OPENAI_API_KEY) {
   console.error("❌ OPENAI_API_KEY no configurada");
+  process.exit(1);
 }
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// 🟢 Endpoint raíz (NECESARIO para healthcheck Railway)
-app.get("/", (req, res) => {
-  res.status(200).send("Kairoma backend OK");
-});
-
-// 💡 Endpoint IA
+// 🧠 Endpoint principal
 app.post("/idea", async (req, res) => {
   const topic = (req.body?.topic || "").trim();
 
   if (!topic) {
-    return res.json({
-      idea: "Escribe un tema para generar ideas.",
-    });
+    return res.json({ idea: "Escribe un tema para generar ideas." });
   }
 
   try {
@@ -41,11 +43,11 @@ app.post("/idea", async (req, res) => {
         {
           role: "system",
           content:
-            "Genera ideas prácticas, claras y accionables en español.",
+            "Eres un generador de ideas práctico. Respondes en español con ideas accionables.",
         },
         {
           role: "user",
-          content: `Tema: ${topic}. Dame 3 ideas breves con primer paso.`,
+          content: `Tema: "${topic}". Dame 3 ideas concretas con primer paso.`,
         },
       ],
       max_output_tokens: 200,
@@ -55,17 +57,12 @@ app.post("/idea", async (req, res) => {
 
     res.json({ idea });
   } catch (error) {
-    console.error("🔥 ERROR IA:", error);
-    res.status(500).json({
-      idea: "Error generando idea con IA",
-    });
+    console.error("🔥 Error OpenAI:", error);
+    res.status(500).json({ idea: "Error generando ideas." });
   }
 });
 
-// 🔥 PUERTO PRODUCCIÓN (RAILWAY)
-const PORT = process.env.PORT || 3000;
-
-// 🔥 BIND necesario para contenedores
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 Kairoma backend corriendo en puerto ${PORT}`);
+// 🚀 Arranque servidor
+app.listen(PORT, HOST, () => {
+  console.log(`🚀 Server running on ${HOST}:${PORT}`);
 });
