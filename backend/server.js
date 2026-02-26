@@ -2,32 +2,53 @@ require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
+const OpenAI = require("openai");
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-const PORT = process.env.PORT || 3000;
-const HOST = "0.0.0.0";
-
-/* 🔹 Healthcheck Railway */
+// 🔹 Endpoint healthcheck Railway
 app.get("/", (req, res) => {
-  res.status(200).send("OK");
+  res.status(200).json({ status: "ok" });
 });
 
-/* 🔹 Endpoint test */
-app.get("/health", (req, res) => {
-  res.json({ status: "running" });
+if (!process.env.OPENAI_API_KEY) {
+  console.error("❌ Falta OPENAI_API_KEY");
+  process.exit(1);
+}
+
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
-/* 🔹 Endpoint idea (sin IA para probar estabilidad) */
 app.post("/idea", async (req, res) => {
-  const topic = req.body?.topic || "";
-  res.json({ idea: `Idea de prueba sobre: ${topic}` });
+  const topic = (req.body?.topic || "").trim();
+
+  if (!topic) {
+    return res.json({ idea: "Escribe un tema para generar ideas." });
+  }
+
+  try {
+    const response = await client.responses.create({
+      model: "gpt-4.1-mini",
+      input: `Genera 3 ideas claras y accionables sobre: ${topic}`,
+      max_output_tokens: 200,
+    });
+
+    const idea = response.output_text || "No se pudo generar la idea.";
+    res.json({ idea });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ idea: "Error IA" });
+  }
 });
 
-/* 🚀 START */
-app.listen(PORT, HOST, () => {
-  console.log(`✅ Server running on ${HOST}:${PORT}`);
+// 🔹 MUY IMPORTANTE para Railway
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`🚀 Server running on port ${PORT}`);
 });
