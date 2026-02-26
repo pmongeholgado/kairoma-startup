@@ -3,30 +3,23 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const OpenAI = require("openai");
+const path = require("path");
 
 const app = express();
 
-// Railway necesita escuchar en 0.0.0.0
-const HOST = "0.0.0.0";
+// 🔑 Railway SIEMPRE usa su PORT interno
 const PORT = process.env.PORT || 3000;
 
+// 🔐 Middleware
 app.use(cors());
 app.use(express.json());
 
-/**
- * 🟢 HEALTHCHECK
- * Railway comprobará este endpoint
- */
+// 🟢 HEALTHCHECK (lo que Railway comprueba)
 app.get("/", (req, res) => {
-  res.status(200).json({
-    status: "ok",
-    service: "kairoma-backend",
-  });
+  res.status(200).send("OK");
 });
 
-/**
- * 🔑 Comprobación API KEY al arrancar
- */
+// 🟢 Endpoint IA
 if (!process.env.OPENAI_API_KEY) {
   console.error("❌ OPENAI_API_KEY no configurada");
   process.exit(1);
@@ -36,16 +29,11 @@ const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-/**
- * 🧠 ENDPOINT IDEA
- */
 app.post("/idea", async (req, res) => {
-  const topic = (req.body?.topic || "").toString().trim();
+  const topic = (req.body?.topic || "").trim();
 
   if (!topic) {
-    return res.json({
-      idea: "Escribe un tema para generar ideas.",
-    });
+    return res.json({ idea: "Escribe un tema para generar ideas." });
   }
 
   try {
@@ -59,28 +47,22 @@ app.post("/idea", async (req, res) => {
         },
         {
           role: "user",
-          content: `Tema: "${topic}". Dame exactamente 3 ideas claras y accionables con primer paso.`,
+          content: `Tema: "${topic}". Dame 3 ideas con primer paso.`,
         },
       ],
-      max_output_tokens: 220,
+      max_output_tokens: 200,
     });
 
-    const idea =
-      response.output_text?.trim() ||
-      "No se pudo generar respuesta.";
+    const idea = response.output_text || "No se pudo generar respuesta.";
 
-    return res.json({ idea });
+    res.json({ idea });
   } catch (error) {
-    console.error("🔥 Error OpenAI:", error?.message || error);
-    return res.status(500).json({
-      idea: "Error generando ideas con IA.",
-    });
+    console.error("🔥 Error OpenAI:", error);
+    res.status(500).json({ idea: "Error generando ideas." });
   }
 });
 
-/**
- * 🚀 ARRANQUE SERVIDOR
- */
-app.listen(PORT, HOST, () => {
-  console.log(`🚀 Server running on ${HOST}:${PORT}`);
+// 🚀 IMPORTANTE: escuchar en 0.0.0.0
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`🚀 Backend listo en puerto ${PORT}`);
 });
