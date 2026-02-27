@@ -47,7 +47,7 @@ app.post("/idea", async (req, res) => {
 });
 
 // 🔹 MUY IMPORTANTE para Railway
-const PORT = process.env.PORT || 8080;
+const PORT = Number(process.env.PORT || 8080);
 const HOST = "0.0.0.0";
 
 app.listen(PORT, HOST, () => {
