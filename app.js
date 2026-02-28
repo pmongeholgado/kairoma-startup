@@ -41,7 +41,13 @@ copyBtn.addEventListener("click", async () => {
 // ✅ FUNCIÓN PRINCIPAL — llamada al backend (misma URL del sitio)
 async function generateIdea() {
   const topic = userInput.value.trim();
+  // 🧠 CONTROL DE USOS GRATIS
+  let freeUses = Number(localStorage.getItem("kairoma_free_uses") || 0);
 
+  if (freeUses >= 2) {
+    window.location.href = "https://buy.stripe.com/4gMdR8bbmeH78Ov0B9eIw01";
+    return;
+  }
   if (!topic) {
     result.innerHTML = `<div class="ideaCard">⚠️ Escribe un tema primero</div>`;
     return;
@@ -70,6 +76,9 @@ async function generateIdea() {
     }
 
     const data = await response.json();
+    // ➕ SUMAR USO GRATIS
+    freeUses++;
+    localStorage.setItem("kairoma_free_uses", freeUses);
     const idea = (data && data.idea) ? String(data.idea) : "No se pudo generar la idea.";
 
     lastIdeaText = idea;
