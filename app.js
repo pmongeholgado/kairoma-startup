@@ -50,7 +50,7 @@ async function generateIdea() {
   result.innerHTML = `<div class="ideaCard">⏳ Generando idea…</div>`;
 
   try {
-    const response = await fetch("/idea", {
+    const response = await fetch("https://kairoma-startup-production.up.railway.app/idea", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ topic }),
